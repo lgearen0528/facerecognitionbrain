@@ -29,9 +29,29 @@ class App extends Component {
     super();
     this.state = {
       input: "",
-      imageURL: ""
+      imageURL: "",
+      box: {}
     };
   }
+
+  calculateFaceLocation = data => {
+    const clarifaiFace =
+      data.outputs[0].data.regions[0].region_info.bounding_box;
+    const image = document.getElementById("inputImage");
+    const width = Number(image.width);
+    const height = Number(image.height);
+    return {
+      leftCol: clarifaiFace.left_col * width,
+      topRow: clarifaiFace.top_row * height,
+      rightCol: width - clarifaiFace.right_col * width,
+      bottomRow: height - clarifaiFace.bottom_row * height
+    };
+  };
+
+  displayFaceBox = box => {
+    console.log(box)
+    this.setState({ box });
+  };
 
   onInputChange = e => {
     this.setState({ input: e.target.value });
@@ -47,19 +67,11 @@ class App extends Component {
         // URL
         this.state.imageURL
       );
-      console.log(response.outputs[0].data.regions[0].region_info.bounding_box);
+      this.displayFaceBox(this.calculateFaceLocation(response));
     } catch (err) {
       console.error(err);
     }
-//https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&w=1000&q=80
-    // .then(function(response) {
-    // // do something with response
-    // console.log();
-    // },
-    // function(err) {// there was an error;
-    //   throw new Error(err)
-    // }
-    // );
+    //https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&w=1000&q=80
   };
 
   render() {
@@ -74,7 +86,7 @@ class App extends Component {
           onInputChange={this.onInputChange}
           onButtonSubmit={this.onButtonSubmit}
         />
-        <FaceRecognition imageURL={this.state.imageURL} />
+        <FaceRecognition imageURL={this.state.imageURL} box={this.state.box} />
       </div>
     );
   }

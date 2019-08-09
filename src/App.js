@@ -34,9 +34,29 @@ class App extends Component {
       imageURL: "",
       box: {},
       route: "signin",
-      isSignedIn: false
+      isSignedIn: false,
+      user: {
+        email: "",
+        id: "",
+        name: "",
+        entries: 0,
+        joined: ""
+      }
     };
   }
+
+  loadUser = data => {
+    const { email, id, name, entries, joined } = data;
+    this.setState({
+      user: {
+        email,
+        id,
+        name,
+        entries,
+        joined
+      }
+    });
+  };
 
   calculateFaceLocation = data => {
     const clarifaiFace =
@@ -70,7 +90,19 @@ class App extends Component {
         // URL
         this.state.imageURL
       );
+      fetch("http://localhost:3000/image", {
+        method: "put",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id:this.state.user.id
+        })
+      })
+      .then(res => res.json())
+      .then(count => {
+        this.setState(Object.assign(this.state.user, { entries: count}))
+      });
       this.displayFaceBox(this.calculateFaceLocation(response));
+      
     } catch (err) {
       console.error(err);
     }
@@ -79,37 +111,43 @@ class App extends Component {
 
   onRouteChange = route => {
     let isSignedIn;
-    if(route === 'signout'){
+    if (route === "signout") {
       isSignedIn = false;
-    } else if (route === 'home'){
+    } else if (route === "home") {
       isSignedIn = true;
     }
     this.setState({ route, isSignedIn });
   };
 
   render() {
-    const {route, isSignedIn, box, imageURL } = this.state;
+    const { route, isSignedIn, box, imageURL } = this.state;
     return (
       <div className="App">
         <Particles className="particles" params={particlesOptions} />
-        <Navigation isSignedIn={isSignedIn} onRouteChange={this.onRouteChange} />
+        <Navigation
+          isSignedIn={isSignedIn}
+          onRouteChange={this.onRouteChange}
+        />
         {route === "home" ? (
           <div>
             <Logo />
-            <Rank />
+            <Rank
+              name={this.state.user.name}
+              entries={this.state.user.entries}
+            />
             <ImageLinkForm
               onInputChange={this.onInputChange}
               onButtonSubmit={this.onButtonSubmit}
             />
-            <FaceRecognition
-              imageURL={imageURL}
-              box={box}
-            />
+            <FaceRecognition imageURL={imageURL} box={box} />
           </div>
         ) : route === "signin" ? (
-          <Signin onRouteChange={this.onRouteChange} />
+          <Signin loadUser={this.loadUser} onRouteChange={this.onRouteChange} />
         ) : (
-          <Register onRouteChange={this.onRouteChange} />
+          <Register
+            onRouteChange={this.onRouteChange}
+            loadUser={this.loadUser}
+          />
         )}
       </div>
     );
